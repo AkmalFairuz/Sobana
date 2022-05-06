@@ -8,6 +8,7 @@ use AkmalFairuz\Sobana\encoding\PacketDecoder;
 use AkmalFairuz\Sobana\encoding\PacketEncoder;
 use AkmalFairuz\Sobana\utils\Signal;
 use AkmalFairuz\Sobana\utils\SobanaException;
+use AttachableThreadedLogger;
 use pocketmine\snooze\SleeperNotifier;
 use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryStream;
@@ -30,6 +31,7 @@ class ServerSocket{
     private array $clients = [];
 
     /**
+     * @param AttachableThreadedLogger $logger
      * @param ServerThread $thread
      * @param string $ip
      * @param int $port
@@ -39,6 +41,7 @@ class ServerSocket{
      * @param string|null $decoderClass
      */
     public function __construct(
+        private AttachableThreadedLogger $logger,
         private ServerThread $thread,
         private string $ip,
         private int $port,
@@ -108,18 +111,21 @@ class ServerSocket{
             $decoder = null;
         }
 
-        $this->clients[$this->nextClientId] = $c = new ServerSocketClient($this->nextClientId, $client, $encoder, $decoder);
+        $this->clients[$this->nextClientId] = $c = new ServerSocketClient($this, $this->nextClientId, $client, $encoder, $decoder);
+        $this->logger->debug("New connection " . $c);
         $this->writeInternal(Binary::writeByte(Signal::OPEN) . Binary::writeInt($c->getId()) . $c->getIp() . ":" . $c->getPort());
     }
 
-    private function closeClient(int $id, bool $closedByThread = false) : void{
+    public function closeClient(int $id, bool $closedByThread = false) : void{
         if(!isset($this->clients[$id])) {
             return;
         }
         if($closedByThread){
             $this->writeInternal(Binary::writeByte(Signal::CLOSE) . Binary::writeInt($id));
         }
-        $this->clients[$id]->close();
+        $client = $this->clients[$id];
+        $this->logger->debug("Closed connection " . $client);
+        $client->close();
         unset($this->clients[$id]);
     }
 
@@ -150,5 +156,12 @@ class ServerSocket{
         }
         @stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
         @fclose($this->socket);
+    }
+
+    /**
+     * @return AttachableThreadedLogger
+     */
+    public function getLogger(): AttachableThreadedLogger{
+        return $this->logger;
     }
 }

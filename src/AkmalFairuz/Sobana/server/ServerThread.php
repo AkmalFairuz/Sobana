@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AkmalFairuz\Sobana\server;
 
+use AttachableThreadedLogger;
 use pocketmine\snooze\SleeperNotifier;
 use pocketmine\thread\Thread;
 use Threaded;
@@ -16,6 +17,7 @@ class ServerThread extends Thread{
     private Threaded $external;
 
     /**
+     * @param AttachableThreadedLogger $logger
      * @param resource $ipc
      * @param string $ip
      * @param int $port
@@ -24,6 +26,7 @@ class ServerThread extends Thread{
      * @param string $decoderClass
      */
     public function __construct(
+        private AttachableThreadedLogger $logger,
         private $ipc,
         private string $ip,
         private int $port,
@@ -35,7 +38,7 @@ class ServerThread extends Thread{
 
     public function onRun(): void{
         gc_enable();
-        $socket = new ServerSocket($this, $this->ip, $this->port, $this->ipc, $this->notifier, $this->encoderClass, $this->decoderClass);
+        $socket = new ServerSocket($this->logger, $this, $this->ip, $this->port, $this->ipc, $this->notifier, $this->encoderClass, $this->decoderClass);
         while(!$this->shutdown) {
             $socket->tick();
         }
