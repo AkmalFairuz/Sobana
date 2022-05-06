@@ -83,7 +83,7 @@ class ServerSocketClient{
                 return;
             }
         }
-        @fwrite($this->socket, $buffer);
+        @fwrite($this->socket, $buffer, strlen($buffer));
     }
 
     public function read(): ?string{

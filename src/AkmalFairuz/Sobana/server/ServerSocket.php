@@ -10,10 +10,13 @@ use AttachableThreadedLogger;
 use pocketmine\snooze\SleeperNotifier;
 use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryStream;
+use function fclose;
 use function fread;
+use function is_resource;
 use function socket_last_error;
 use function socket_strerror;
 use function stream_select;
+use function stream_set_blocking;
 use function stream_socket_accept;
 use function stream_socket_server;
 use function stream_socket_shutdown;
@@ -64,11 +67,13 @@ class ServerSocket{
         }
         $write = null;
         $except = null;
-        if(stream_select($read, $write, $except, 0, 0) > 0) {
+        if(@stream_select($read, $write, $except, 0, 0) > 0) {
             foreach($read as $k => $socket){
                 switch($k) {
                     case -1: // IPC
-                        @fread($socket, 65535);
+                        if(is_resource($socket)){
+                            @fread($socket, 65535);
+                        }
                         break;
                     case 0: // Server
                         if(($client = @stream_socket_accept($socket)) !== false) {
@@ -154,10 +159,13 @@ class ServerSocket{
 
     public function close() {
         foreach($this->clients as $client) {
-            $this->closeClient($client->getId(), true);
+            @fclose($client->getSocket());
         }
+        $this->clients = [];
+        @stream_set_blocking($this->socket, true);
         @stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
         @fclose($this->socket);
+        unset($this->socket);
     }
 
     /**
