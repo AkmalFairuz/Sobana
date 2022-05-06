@@ -31,8 +31,8 @@ class ServerThread extends Thread{
         private string $ip,
         private int $port,
         private SleeperNotifier $notifier,
-        private string $encoderClass,
-        private string $decoderClass
+        private ?string $encoderClass,
+        private ?string $decoderClass
     ){
         $this->internal = new Threaded();
         $this->external = new Threaded();
