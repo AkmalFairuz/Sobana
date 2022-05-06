@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace AkmalFairuz\Sobana\encoding;
 
+/**
+ * NOTE: This class is executed in another thread.
+ */
+
 abstract class PacketDecoder{
 
     protected string $buffer = "";
