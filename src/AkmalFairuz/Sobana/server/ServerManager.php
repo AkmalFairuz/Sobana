@@ -38,8 +38,6 @@ class ServerManager{
     ) {
         if($sessionClass !== null && !is_subclass_of($sessionClass, ServerSession::class)) {
             throw new SobanaException("$sessionClass must extend with " . ServerSession::class . " class");
-        }else{
-            $this->sessionClass = ServerSession::class;
         }
         if($encoderClass !== null && !is_subclass_of($encoderClass, PacketEncoder::class)) {
             throw new SobanaException("$encoderClass must extend with " . PacketEncoder::class . " class");
@@ -100,7 +98,7 @@ class ServerManager{
     }
 
     private function openSession(int $id, string $ip, int $port) : void{
-        $sc = $this->sessionClass;
+        $sc = $this->sessionClass ?? ServerSession::class;
         $this->sessions[$id] = new $sc($this, $id, $ip, $port);
     }
 
