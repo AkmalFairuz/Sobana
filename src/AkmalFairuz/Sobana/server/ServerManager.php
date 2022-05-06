@@ -51,7 +51,7 @@ class ServerManager{
             $this->readInternal();
         });
         [$this->mainIPC, $this->threadIPC] = Utils::createIPCSocket();
-        $this->thread = new ServerThread($this->threadIPC, $ip, $port, $notifier, $encoderClass, $decoderClass);
+        $this->thread = new ServerThread(Server::getInstance()->getLogger(), $this->threadIPC, $ip, $port, $notifier, $encoderClass, $decoderClass);
     }
 
     public function start() : void{
@@ -85,7 +85,7 @@ class ServerManager{
                     break;
                 case Signal::READ:
                     $client = $stream->getInt();
-                    $packet = $stream->getBuffer();
+                    $packet = $stream->getRemaining();
                     $this->handlePacket($client, $packet);
                     break;
             }

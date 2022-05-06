@@ -9,8 +9,10 @@ use pocketmine\utils\Binary;
 
 class ServerSession{
 
+    protected bool $closed = false;
+
     public function __construct(
-        private ServerManager $serverManager,
+        protected ServerManager $serverManager,
         private int $id,
         private string $ip,
         private int $port
@@ -43,10 +45,13 @@ class ServerSession{
     }
 
     final public function close(bool $closedByThread = false) : void{
+        if($this->closed) {
+            return;
+        }
+        $this->closed = true;
         $this->onClose();
         if(!$closedByThread) {
             $this->serverManager->closeSession($this->id);
-            return;
         }
     }
 

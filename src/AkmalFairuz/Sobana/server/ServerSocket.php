@@ -62,9 +62,10 @@ class ServerSocket{
         $read = [$this->socket];
         $read[-1] = $this->ipc;
         foreach($this->clients as $k => $client) {
-            $read[$k] = $client;
+            $read[$k] = $client->getSocket();
         }
-
+        $write = null;
+        $except = null;
         if(stream_select($read, $write, $except, 0, 0) > 0) {
             foreach($read as $k => $socket){
                 switch($k) {
@@ -148,6 +149,7 @@ class ServerSocket{
 
     private function writeInternal(string $buffer) : void{
         $this->thread->writeInternal($buffer);
+        $this->notifier->wakeupSleeper();
     }
 
     public function close() {

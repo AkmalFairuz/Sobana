@@ -34,6 +34,8 @@ class ServerThread extends Thread{
         private string $encoderClass,
         private string $decoderClass
     ){
+        $this->internal = new Threaded();
+        $this->external = new Threaded();
     }
 
     public function onRun(): void{
