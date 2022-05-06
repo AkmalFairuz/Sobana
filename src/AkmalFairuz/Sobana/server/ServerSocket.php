@@ -135,7 +135,9 @@ class ServerSocket{
                 case Signal::WRITE:
                     $id = $stream->getInt();
                     $packet = $stream->getRemaining();
-                    $this->clients[$id]?->write($packet);
+                    if(isset($this->clients[$id])){
+                        $this->clients[$id]->write($packet);
+                    }
                     break;
                 case Signal::CLOSE:
                     $id = $stream->getInt();
@@ -163,5 +165,19 @@ class ServerSocket{
      */
     public function getLogger(): AttachableThreadedLogger{
         return $this->logger;
+    }
+
+    /**
+     * @return string
+     */
+    public function getIp(): string{
+        return $this->ip;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPort(): int{
+        return $this->port;
     }
 }
