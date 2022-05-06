@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace AkmalFairuz\Sobana\server;
 
-use AkmalFairuz\Sobana\encoding\PacketDecoder;
-use AkmalFairuz\Sobana\encoding\PacketEncoder;
 use AkmalFairuz\Sobana\utils\Signal;
 use AkmalFairuz\Sobana\utils\SobanaException;
 use AttachableThreadedLogger;
 use pocketmine\snooze\SleeperNotifier;
 use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryStream;
-use function class_exists;
 use function fread;
 use function socket_last_error;
 use function socket_strerror;
@@ -54,6 +51,7 @@ class ServerSocket{
             throw new SobanaException("Could not create server socket $ip:$port. Reason:" . socket_strerror(socket_last_error()));
         }
         $this->socket = $socket;
+        $this->logger->info("Created Sobana Server $ip:$port");
     }
 
     public function tick() : void{
