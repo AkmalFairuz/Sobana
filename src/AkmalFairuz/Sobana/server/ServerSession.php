@@ -17,6 +17,7 @@ class ServerSession{
         private string $ip,
         private int $port
     ) {
+        $this->onConnect();
     }
 
     /**
@@ -32,6 +33,8 @@ class ServerSession{
     public function getIp(): string{
         return $this->ip;
     }
+
+    public function onConnect() : void{}
 
     /**
      * @return int

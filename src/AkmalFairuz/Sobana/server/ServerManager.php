@@ -32,17 +32,19 @@ class ServerManager{
     public function __construct(
         string $ip,
         int $port,
-        private string $sessionClass,
+        private ?string $sessionClass = null,
         ?string $encoderClass = null,
         ?string $decoderClass = null,
     ) {
-        if(!is_subclass_of($sessionClass, ServerSession::class)) {
+        if($sessionClass !== null && !is_subclass_of($sessionClass, ServerSession::class)) {
             throw new SobanaException("$sessionClass must extend with " . ServerSession::class . " class");
+        }else{
+            $this->sessionClass = ServerSession::class;
         }
-        if(!is_subclass_of($encoderClass, PacketEncoder::class)) {
+        if($encoderClass !== null && !is_subclass_of($encoderClass, PacketEncoder::class)) {
             throw new SobanaException("$encoderClass must extend with " . PacketEncoder::class . " class");
         }
-        if(!is_subclass_of($decoderClass, PacketDecoder::class)) {
+        if($decoderClass !== null && !is_subclass_of($decoderClass, PacketDecoder::class)) {
             throw new SobanaException("$decoderClass must extend with " . PacketDecoder::class . " class");
         }
         $sleeper = Server::getInstance()->getTickSleeper();
@@ -121,11 +123,15 @@ class ServerManager{
         return $this->sessions;
     }
 
-    private function handlePacket(int $client, string $packet){
+    private function handlePacket(int $client, string $packet) : void{
         if(!isset($this->sessions[$client])) {
             return;
         }
         $session = $this->sessions[$client];
         $session->handlePacket($packet);
+    }
+
+    public function shutdown() : void{
+        $this->thread->shutdown();
     }
 }

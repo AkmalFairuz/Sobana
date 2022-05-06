@@ -76,6 +76,11 @@ class ServerThread extends Thread{
         @fwrite($this->ipc, "\x00");
     }
 
+    public function quit(): void{
+        $this->shutdown();
+        parent::quit();
+    }
+
     public function getThreadName(): string{
         return "Sobana";
     }
