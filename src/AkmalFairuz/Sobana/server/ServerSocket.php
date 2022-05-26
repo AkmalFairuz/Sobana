@@ -54,6 +54,7 @@ class ServerSocket{
         if(($socket = stream_socket_server("tcp://$ip:$port")) === false) {
             throw new SobanaException("Could not create server socket $ip:$port. Reason:" . socket_strerror(socket_last_error()));
         }
+        stream_set_blocking($socket, false);
         $this->socket = $socket;
         $this->logger->info("Created Sobana Server $ip:$port");
     }
@@ -73,7 +74,7 @@ class ServerSocket{
                 switch($k) {
                     case -1: // IPC
                         if(is_resource($socket)){
-                            @fread($socket, 65535);
+                            @fread($socket, 1);
                         }
                         break;
                     case 0: // Server
@@ -137,6 +138,7 @@ class ServerSocket{
 
     private function readExternal() : void{
         while(($buf = $this->thread->readExternal()) !== null) {
+            @fread($this->ipc, 1);
             $stream = new BinaryStream($buf);
             switch($stream->getByte()) {
                 case Signal::WRITE:

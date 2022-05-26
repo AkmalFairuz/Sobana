@@ -13,6 +13,7 @@ use function fclose;
 use function fread;
 use function fwrite;
 use function min;
+use function str_split;
 use function stream_socket_get_name;
 use function strlen;
 use function substr;
@@ -83,7 +84,9 @@ class ServerSocketClient{
                 return;
             }
         }
-        @fwrite($this->socket, $buffer);
+        foreach(str_split($buffer, 65535) as $buf) {
+            @fwrite($this->socket, $buf);
+        }
     }
 
     public function read(): ?string{
