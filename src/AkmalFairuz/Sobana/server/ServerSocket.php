@@ -103,6 +103,7 @@ class ServerSocket{
      * @return void
      */
     private function addClient($client) : void{
+        stream_set_blocking($client, false);
         $this->nextClientId++;
 
         if(($ec = $this->encoderClass) !== null) {
