@@ -67,7 +67,7 @@ class ServerSocket{
         }
         $write = null;
         $except = null;
-        if(@stream_select($read, $write, $except, 0, 0) > 0) {
+        if(@stream_select($read, $write, $except, 10, 0) > 0) {
             foreach($read as $k => $socket){
                 switch($k) {
                     case -1: // IPC
