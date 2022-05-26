@@ -83,12 +83,21 @@ class ServerSocketClient{
                 return;
             }
         }
-        @fwrite($this->socket, $buffer, strlen($buffer));
+        @fwrite($this->socket, $buffer);
     }
 
     public function read(): ?string{
-        $ret = @fread($this->socket, 65535);
-        if($ret === false || $ret === "") { // client sent empty packet when disconnected.
+        $ret = "";
+
+        while(true){
+            $x = @fread($this->socket, 65535);
+            if($x === "" || $x === false) {
+                break;
+            }
+            $ret .= $x;
+        }
+
+        if($ret === "") { // client sent empty packet when disconnected.
             return null;
         }
         if($this->decoder !== null){

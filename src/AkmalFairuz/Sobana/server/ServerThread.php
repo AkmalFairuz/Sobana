@@ -9,6 +9,7 @@ use pocketmine\snooze\SleeperNotifier;
 use pocketmine\thread\Thread;
 use Threaded;
 use function gc_enable;
+use function usleep;
 
 class ServerThread extends Thread{
 
@@ -43,6 +44,7 @@ class ServerThread extends Thread{
         $socket = new ServerSocket($this->logger, $this, $this->ip, $this->port, $this->ipc, $this->notifier, $this->encoderClass, $this->decoderClass);
         while(!$this->shutdown) {
             $socket->tick();
+            usleep(1000);
         }
         $socket->close();
     }

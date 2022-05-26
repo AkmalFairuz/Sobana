@@ -20,6 +20,7 @@ use function stream_set_blocking;
 use function stream_socket_accept;
 use function stream_socket_server;
 use function stream_socket_shutdown;
+use function usleep;
 use const STREAM_SHUT_RDWR;
 
 class ServerSocket{
