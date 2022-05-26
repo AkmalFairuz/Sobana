@@ -87,17 +87,8 @@ class ServerSocketClient{
     }
 
     public function read(): ?string{
-        $ret = "";
-
-        while(true){
-            $x = @fread($this->socket, 65535);
-            if($x === "" || $x === false) {
-                break;
-            }
-            $ret .= $x;
-        }
-
-        if($ret === "") { // client sent empty packet when disconnected.
+        $ret = @fread($this->socket, 1024 * 1024 * 2);
+        if($ret === false || $ret === "") { // client sent empty packet when disconnected.
             return null;
         }
         if($this->decoder !== null){
