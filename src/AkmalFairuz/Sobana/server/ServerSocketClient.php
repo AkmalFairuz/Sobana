@@ -84,9 +84,7 @@ class ServerSocketClient{
                 return;
             }
         }
-        foreach(str_split($buffer, 65535) as $buf) {
-            @fwrite($this->socket, $buf);
-        }
+        @fwrite($this->socket, $buffer);
     }
 
     public function read(): ?string{

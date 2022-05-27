@@ -9,13 +9,16 @@ use AkmalFairuz\Sobana\encoding\PacketEncoder;
 use AkmalFairuz\Sobana\utils\Signal;
 use AkmalFairuz\Sobana\utils\SobanaException;
 use AkmalFairuz\Sobana\utils\Utils;
+use pocketmine\plugin\PluginBase;
+use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
 use pocketmine\snooze\SleeperNotifier;
-use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryStream;
+use function chr;
 use function explode;
 use function fwrite;
 use function is_subclass_of;
+use function pack;
 
 class ServerManager{
 
@@ -30,6 +33,7 @@ class ServerManager{
     private array $sessions = [];
 
     public function __construct(
+        PluginBase $plugin,
         string $ip,
         int $port,
         private ?string $sessionClass = null,
@@ -52,6 +56,10 @@ class ServerManager{
         });
         [$this->mainIPC, $this->threadIPC] = Utils::createIPCSocket();
         $this->thread = new ServerThread(Server::getInstance()->getLogger(), $this->threadIPC, $ip, $port, $notifier, $encoderClass, $decoderClass);
+
+        $plugin->getScheduler()->scheduleRepeatingTask(new ClosureTask(function() {
+            $this->triggerGarbageCollector();
+        }), 20 * 1800);
     }
 
     public function start() : void{
@@ -107,7 +115,7 @@ class ServerManager{
             return;
         }
         if(!$closedByThread) {
-            $this->writeExternal(Binary::writeByte(Signal::CLOSE) . Binary::writeInt($id));
+            $this->writeExternal(chr(Signal::CLOSE) . pack("N", $id));
         }
         $session = $this->sessions[$id];
         $session->close($closedByThread);
@@ -131,5 +139,9 @@ class ServerManager{
 
     public function shutdown() : void{
         $this->thread->shutdown();
+    }
+
+    public function triggerGarbageCollector() {
+        $this->writeExternal(chr(Signal::GARBAGE_COLLECTOR));
     }
 }

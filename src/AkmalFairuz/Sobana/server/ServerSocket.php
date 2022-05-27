@@ -8,11 +8,12 @@ use AkmalFairuz\Sobana\utils\Signal;
 use AkmalFairuz\Sobana\utils\SobanaException;
 use AttachableThreadedLogger;
 use pocketmine\snooze\SleeperNotifier;
-use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryStream;
 use function fclose;
 use function fread;
-use function is_resource;
+use function gc_collect_cycles;
+use function gc_enable;
+use function gc_mem_caches;
 use function socket_last_error;
 use function socket_strerror;
 use function stream_select;
@@ -20,7 +21,6 @@ use function stream_set_blocking;
 use function stream_socket_accept;
 use function stream_socket_server;
 use function stream_socket_shutdown;
-use function usleep;
 use const STREAM_SHUT_RDWR;
 
 class ServerSocket{
@@ -30,6 +30,8 @@ class ServerSocket{
     private int $nextClientId = 1;
     /** @var ServerSocketClient[] */
     private array $clients = [];
+    /** @var resource[] */
+    private array $clientSockets = [];
 
     /**
      * @param AttachableThreadedLogger $logger
@@ -62,20 +64,16 @@ class ServerSocket{
     public function tick() : void{
         $this->readExternal();
 
-        $read = [$this->socket];
+        $read = $this->clientSockets;
+        $read[0] = $this->socket;
         $read[-1] = $this->ipc;
-        foreach($this->clients as $k => $client) {
-            $read[$k] = $client->getSocket();
-        }
         $write = null;
         $except = null;
         if(@stream_select($read, $write, $except, 10, 0) > 0) {
             foreach($read as $k => $socket){
                 switch($k) {
                     case -1: // IPC
-                        if(is_resource($socket)){
-                            @fread($socket, 1);
-                        }
+                        @fread($socket, 65535);
                         break;
                     case 0: // Server
                         if(($client = @stream_socket_accept($socket)) !== false) {
@@ -92,7 +90,7 @@ class ServerSocket{
                         if($packet === "") { // decoder: incomplete packet
                             break;
                         }
-                        $this->writeInternal(Binary::writeByte(Signal::READ) . Binary::writeInt($k) . $packet);
+                        $this->writeInternal(chr(Signal::READ) . pack("N", $k) . $packet);
                         break;
                 }
             }
@@ -118,9 +116,10 @@ class ServerSocket{
             $decoder = null;
         }
 
+        $this->clientSockets[$this->nextClientId] = $client;
         $this->clients[$this->nextClientId] = $c = new ServerSocketClient($this, $this->nextClientId, $client, $encoder, $decoder);
         $this->logger->debug("New connection " . $c);
-        $this->writeInternal(Binary::writeByte(Signal::OPEN) . Binary::writeInt($c->getId()) . $c->getIp() . ":" . $c->getPort());
+        $this->writeInternal(chr(Signal::OPEN) . pack("N", $c->getId()) . $c->getIp() . ":" . $c->getPort());
     }
 
     public function closeClient(int $id, bool $closedByThread = false) : void{
@@ -128,17 +127,17 @@ class ServerSocket{
             return;
         }
         if($closedByThread){
-            $this->writeInternal(Binary::writeByte(Signal::CLOSE) . Binary::writeInt($id));
+            $this->writeInternal(chr(Signal::CLOSE) . pack("N", $id));
         }
         $client = $this->clients[$id];
         $this->logger->debug("Closed connection " . $client);
         $client->close();
+        unset($this->clientSockets[$id]);
         unset($this->clients[$id]);
     }
 
     private function readExternal() : void{
         while(($buf = $this->thread->readExternal()) !== null) {
-            @fread($this->ipc, 1);
             $stream = new BinaryStream($buf);
             switch($stream->getByte()) {
                 case Signal::WRITE:
@@ -151,6 +150,11 @@ class ServerSocket{
                 case Signal::CLOSE:
                     $id = $stream->getInt();
                     $this->closeClient($id);
+                    break;
+                case Signal::GARBAGE_COLLECTOR:
+                    gc_enable();
+                    gc_collect_cycles();
+                    gc_mem_caches();
                     break;
             }
         }
@@ -169,6 +173,7 @@ class ServerSocket{
         @stream_set_blocking($this->socket, true);
         @stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
         @fclose($this->socket);
+        unset($this->ipc);
         unset($this->socket);
     }
 

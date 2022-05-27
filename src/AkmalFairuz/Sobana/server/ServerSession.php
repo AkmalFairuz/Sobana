@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace AkmalFairuz\Sobana\server;
 
 use AkmalFairuz\Sobana\utils\Signal;
-use pocketmine\utils\Binary;
+use function pack;
 
 class ServerSession{
 
@@ -44,7 +44,7 @@ class ServerSession{
     }
 
     public function write(string $buffer) : void{
-        $this->serverManager->writeExternal(Binary::writeByte(Signal::WRITE) . Binary::writeInt($this->id) . $buffer);
+        $this->serverManager->writeExternal(chr(Signal::WRITE) . pack("N", $this->id) . $buffer);
     }
 
     final public function close(bool $closedByThread = false) : void{

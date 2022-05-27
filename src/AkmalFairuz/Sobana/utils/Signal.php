@@ -10,4 +10,5 @@ interface Signal{
     public const READ = 1;
     public const CLOSE = 2;
     public const OPEN = 3;
+    public const GARBAGE_COLLECTOR = 4;
 }

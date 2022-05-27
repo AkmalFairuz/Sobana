@@ -10,7 +10,7 @@ namespace AkmalFairuz\Sobana\encoding;
 
 abstract class PacketDecoder{
 
-    protected string $buffer = "";
+    protected $buffer = "";
 
     /**
      * Used to handle incomplete packet
