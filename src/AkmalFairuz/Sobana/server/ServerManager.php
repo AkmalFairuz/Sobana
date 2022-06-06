@@ -79,7 +79,7 @@ class ServerManager{
         }
     }
 
-    private function notify() : void{
+    public function notify() : void{
         if(fwrite($this->mainIPC, "\x00") === false) { // trigger socket_select
             throw new SobanaException("Could not notify main IPC socket");
         }
@@ -109,9 +109,11 @@ class ServerManager{
         }
     }
 
-    public function writeExternal(string $buffer) : void{
+    public function writeExternal(string $buffer, bool $notify = true) : void{
         $this->thread->writeExternal($buffer);
-        $this->notify();
+        if($notify){
+            $this->notify();
+        }
     }
 
     private function openSession(int $id, string $ip, int $port) : void{

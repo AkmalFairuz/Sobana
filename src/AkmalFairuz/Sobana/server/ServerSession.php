@@ -6,6 +6,7 @@ namespace AkmalFairuz\Sobana\server;
 
 use AkmalFairuz\Sobana\utils\Signal;
 use function chr;
+use function count;
 use function pack;
 
 class ServerSession{
@@ -56,10 +57,13 @@ class ServerSession{
     }
 
     public function flush() {
-        foreach($this->writeBuffer as $buffer) {
-            $this->serverManager->writeExternal(chr(Signal::WRITE) . pack("N", $this->id) . $buffer);
+        if(count($this->writeBuffer) > 0){
+            foreach($this->writeBuffer as $buffer){
+                $this->serverManager->writeExternal(chr(Signal::WRITE) . pack("N", $this->id) . $buffer, false);
+            }
+            $this->serverManager->notify();
+            $this->writeBuffer = [];
         }
-        $this->writeBuffer = [];
     }
 
     final public function close(bool $closedByThread = false) : void{
