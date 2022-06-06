@@ -33,7 +33,7 @@ class ServerManager{
     private array $sessions = [];
 
     public function __construct(
-        PluginBase $plugin,
+        private PluginBase $plugin,
         string $ip,
         int $port,
         private ?string $sessionClass = null,
@@ -68,6 +68,15 @@ class ServerManager{
         }
         $this->running = true;
         $this->thread->start();
+        $this->plugin->getScheduler()->scheduleRepeatingTask(new ClosureTask(function() : void{
+            $this->tick();
+        }), 1);
+    }
+
+    private function tick() {
+        foreach($this->sessions as $session) {
+            $session->flush();
+        }
     }
 
     private function notify() : void{

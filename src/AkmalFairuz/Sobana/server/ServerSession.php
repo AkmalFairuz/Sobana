@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace AkmalFairuz\Sobana\server;
 
 use AkmalFairuz\Sobana\utils\Signal;
+use function chr;
 use function pack;
 
 class ServerSession{
 
     protected bool $closed = false;
+    /** @var string[] */
+    private array $writeBuffer = [];
 
     public function __construct(
         protected ServerManager $serverManager,
@@ -44,7 +47,19 @@ class ServerSession{
     }
 
     public function write(string $buffer) : void{
-        $this->serverManager->writeExternal(chr(Signal::WRITE) . pack("N", $this->id) . $buffer);
+        $this->writeBuffer[] = $buffer;
+    }
+
+    public function writeAndFlush(string $buffer) {
+        $this->write($buffer);
+        $this->flush();
+    }
+
+    public function flush() {
+        foreach($this->writeBuffer as $buffer) {
+            $this->serverManager->writeExternal(chr(Signal::WRITE) . pack("N", $this->id) . $buffer);
+        }
+        $this->writeBuffer = [];
     }
 
     final public function close(bool $closedByThread = false) : void{
