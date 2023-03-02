@@ -169,7 +169,7 @@ class ServerSocket{
         foreach($this->clients as $client) {
             $socket = $client->getSocket();
             if($socket !== null) {
-                @fclose($client->getSocket());
+                @fclose($socket);
             }
         }
         $this->clients = [];
