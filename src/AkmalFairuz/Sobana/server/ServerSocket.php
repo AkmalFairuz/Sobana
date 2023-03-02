@@ -167,12 +167,17 @@ class ServerSocket{
 
     public function close() {
         foreach($this->clients as $client) {
-            @fclose($client->getSocket());
+            $socket = $client->getSocket();
+            if($socket !== null) {
+                @fclose($client->getSocket());
+            }
         }
         $this->clients = [];
-        @stream_set_blocking($this->socket, true);
-        @stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
-        @fclose($this->socket);
+        if($this->socket !== null) {
+            @stream_set_blocking($this->socket, true);
+            @stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
+            @fclose($this->socket);
+        }
         unset($this->ipc);
         unset($this->socket);
     }
