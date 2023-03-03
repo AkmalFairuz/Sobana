@@ -173,13 +173,13 @@ class ServerSocket{
             }
         }
         $this->clients = [];
-        if($this->socket !== null) {
+        if(isset($this->socket) && $this->socket !== null) {
             @stream_set_blocking($this->socket, true);
             @stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
             @fclose($this->socket);
+            unset($this->socket);
         }
         unset($this->ipc);
-        unset($this->socket);
     }
 
     /**
